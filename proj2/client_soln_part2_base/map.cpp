@@ -234,14 +234,17 @@ uint8_t is_cursor_visible() {
 
 uint8_t get_cursor_screen_x_y( uint16_t *cursor_screen_x
                              , uint16_t *cursor_screen_y) {
-    if (is_cursor_visible) {
-        *cursor_screen_x = cursor_map_x - screen_map_x;
-        *cursor_screen_y = cursor_map_y - screen_map_y;
-        return 1;
-    }
 
-    // not visible
-    return 0;
+    if (!is_cursor_visible) // not visible
+        return 0;
+
+    *cursor_screen_x = cursor_map_x - screen_map_x;
+    *cursor_screen_y = cursor_map_y - screen_map_y;
+    return 1;
+}
+
+void draw_cursor_coords(const uint16_t x, const uint16_t y) {
+    tft.fillCircle(x, y, dot_radius, RED);
 }
 
 void draw_cursor() {
@@ -251,22 +254,27 @@ void draw_cursor() {
     if (get_cursor_screen_x_y(&cursor_screen_x, &cursor_screen_y)) {
         cursor_screen_x = cursor_map_x - screen_map_x;
         cursor_screen_y = cursor_map_y - screen_map_y;
-        tft.fillCircle(cursor_screen_x, cursor_screen_y, dot_radius, RED);
+        draw_cursor_coords(cursor_screen_x, cursor_screen_y);
     }
+}
+
+void erase_cursor_coords(const uint16_t x, const uint16_t y) {
+    // Redraw the map on top of the current cursor position
+    lcd_image_draw(&map_tiles[current_map_num], &tft,
+        cursor_map_x - dot_radius,
+        cursor_map_y - dot_radius,
+        x - dot_radius,
+        y - dot_radius,
+        2 * dot_radius + 1,
+        2 * dot_radius + 1
+    );
 }
 
 void erase_cursor() {
     uint16_t cursor_screen_x;
     uint16_t cursor_screen_y;
     if (get_cursor_screen_x_y(&cursor_screen_x, &cursor_screen_y)) {
-        // Redraw the map on top of the current cursor position
-        lcd_image_draw(&map_tiles[current_map_num], &tft,
-        cursor_map_x - dot_radius,
-        cursor_map_y - dot_radius,
-        cursor_screen_x - dot_radius,
-        cursor_screen_y - dot_radius,
-        2 * dot_radius + 1,
-        2 * dot_radius + 1);
+        erase_cursor_coords(cursor_screen_x, cursor_screen_y);
     }
 }
 

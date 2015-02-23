@@ -67,8 +67,13 @@ uint8_t set_zoom();
 void initialize_map();
 void draw_map_screen();
 uint8_t get_cursor_screen_x_y(uint16_t *cursor_screen_x,uint16_t *cursor_screen_y);
+
 void draw_cursor();
+void draw_cursor_coords(const uint16_t x, const uint16_t y);
+
 void erase_cursor();
+void erase_cursor_coords(const uint16_t x, const uint16_t y);
+
 void move_window_to(int16_t x, int16_t y);
 void move_window(int32_t lon, int32_t lat);
 void move_cursor_to(int16_t x, int16_t y);
