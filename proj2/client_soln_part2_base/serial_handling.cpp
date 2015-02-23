@@ -5,15 +5,65 @@
 #include <assert13.h>
 #include <stdio.h> // isdigit
 
+static LonLat32 get_waypoint();
 // replace the next two functions with your implementation
 // of the communication with the server
 int srv_get_pathlen(LonLat32 start, LonLat32 end) {
-    return 8;
+    send_coords(&start, &end);
+    uint16_t count_len = 10;
+    char *msg = (char *)malloc(sizeof(*msg) * count_len);
+    if (msg == NULL)
+        return -1;
+
+    uint16_t nread = serial_readline(msg, count_len);
+    // Serial.println(msg);
+
+    int32_t v = 0;
+    parse_first_digits(msg, &v);
+
+    free(msg);
+
+    return v;
+}
+
+// Greedy parse till the first encounter of digits and then
+// returns the end index on which the last digit was found
+int parse_first_digits(const char *str, int32_t *sav) {
+    if (str == NULL)
+        return -1;
+
+    const char *t = str;
+    while (!isdigit(*t)) ++t;
+
+    int32_t v = 0;
+    while (isdigit(*t)) {
+        v *= 10;
+        v += (*t - '0');
+        ++t;
+    }
+    *sav = v;
+    return  t - str;
+}
+
+static LonLat32 get_waypoint() {
+    int32_t lat, lon;
+    int index, nchars = 100;
+    char *line = (char *)malloc(sizeof(*line) * nchars);
+    int nread = serial_readline(line, nchars);
+    // TODO: Check for nread
+    index = parse_first_digits(line, &lat);
+    
+    index = parse_first_digits(line + index, &lon);
+
+    // Clean up
+    free(line);
+    return LonLat32(lat, lon);
 }
 
 int srv_get_waypoints(LonLat32* waypoints, int path_len) {
-    for (int i=0; i<path_len; ++i) {
-        waypoints[i] = LonLat32(i,i);
+    for (int i=0; i < path_len; ++i) {
+        waypoints[i] = get_waypoint();
+        send_ack();
     }
     return 0;
 }
@@ -97,4 +147,21 @@ int32_t string_get_int(const char *str) {
     }
 
     return val;
+}
+
+void send_ack() {
+    Serial.println("A");
+}
+
+void send_coords(const LonLat32 *start, const LonLat32 *end) {
+    Serial.print("R ");
+    Serial.print(" ");
+    Serial.print(start->lat);
+    Serial.print(" ");
+    Serial.print(start->lon);
+    Serial.print(" ");
+    Serial.print(end->lat);
+    Serial.print(" ");
+    Serial.print(end->lon);
+    Serial.println();
 }

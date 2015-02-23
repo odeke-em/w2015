@@ -83,5 +83,11 @@ uint16_t string_read_field(const char *str, uint16_t str_start,
  */
 
 int32_t string_get_int(const char *str);
+ 
+void send_ack();
+
+// Forward declarations
+int parse_first_digits(const char *str, int32_t *sav);
+void send_coords(const LonLat32 *start, const LonLat32 *end);
 
 #endif

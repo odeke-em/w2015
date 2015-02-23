@@ -4,8 +4,8 @@ import math
 import doctest
 
 # Local modules
-import graph_v2
-from binary_heap import BinaryHeap
+from .graph_v2 import Graph, deserialize_graph
+from .binary_heap import BinaryHeap
 
 def retrieve_attrs(vertex_map, v_id):
     """
@@ -85,7 +85,7 @@ class Server:
                 vertex is always start, the last is always dest in the list.
                 Any two consecutive vertices correspond to some edge in graph.
 
-        >>> graph = graph_v2.Graph({1, 2, 3, 4, 5, 6}, [(1,2), (1,3), (1,6), (2,1),\
+        >>> graph = Graph({1, 2, 3, 4, 5, 6}, [(1,2), (1,3), (1,6), (2,1),\
                     (2,3), (2,4), (3,1), (3,2), (3,4), (3,6), (4,2), (4,3),\
                     (4,5), (5,4), (5,6), (6,1), (6,3), (6,5)])
         >>> weights = {(1,2): 7, (1,3): 9, (1,6): 14, (2,1): 7, (2,3): 10,\
@@ -151,7 +151,7 @@ def back_track(connection_map, cur):
     return walk[::-1]
 
 def main():
-    server = Server(graph_v2.Graph({1, 2, 3, 4, 5, 6}, [(1,2), (1,3), (1,6), (2,1),\
+    server = Server(Graph({1, 2, 3, 4, 5, 6}, [(1,2), (1,3), (1,6), (2,1),\
                     (2,3), (2,4), (3,1), (3,2), (3,4), (3,6), (4,2), (4,3),\
                     (4,5), (5,4), (5,6), (6,1), (6,3), (6,5)]))
     weights = {(1,2): 7, (1,3): 9, (1,6): 14, (2,1): 7, (2,3): 10,\
@@ -162,7 +162,7 @@ def main():
     print(server.least_cost_path(1, 5, cost))
 
 def create_server():
-    g, vmap= graph_v2.deserialize_graph()
+    g, vmap= deserialize_graph()
     srv = Server(g)
     return srv, vmap
 

@@ -3,10 +3,14 @@
 # Basic Graph class implementation provided by
 # CMPUT 275 instructors then augmented by myself.
 
+import os
 import sys
 import math
 import doctest
 import random
+
+DEFAULT_ROADS_PATH = os.path.join(
+                        os.path.dirname(__file__), "edmonton-roads-2.0.1.txt")
 
 class Graph:
     """
@@ -472,7 +476,7 @@ def counting_components(g):
     >>> counting_components(g1)
     1
     """
-    print(type(g._alist))
+    # print(type(g._alist))
     vertices = g._alist.keys()
     buckets = {vertex: set() for vertex in vertices}
 
@@ -491,7 +495,7 @@ def counting_components(g):
 
     return len(buckets)
 
-def deserialize_graph(filename="edmonton-roads-2.0.1.txt"):
+def deserialize_graph(filename=DEFAULT_ROADS_PATH):
     sects = read_undirected_city_graph(filename)
     vx = sects.get('v', [])
     vertices = []

@@ -4,9 +4,13 @@ import sys
 import doctest
 
 # Local module
-import server
+from .server import (
+    cost,
+    create_server,
+)
 
 Acknowledgement = 'A'
+StartOfSession  = 'starting'
 EndOfSession    = 'E'
 Request         = 'R'
 WayPoint        = 'W'
@@ -61,6 +65,7 @@ class Repl:
         if not parsed:
             return EndOfSession, ['']
         head, *rest = parsed
+        # print(head, rest)
         if head == EndOfSession:
             self.__eos = True
         elif head == Request:
@@ -71,6 +76,7 @@ class Repl:
     def parse_request(self, data):
         head, *rest = data
         least_cost_path_ids = self.parse_least_cost_path(*rest)
+        print(least_cost_path_ids)
 
         self.writeline('N %d'%(len(least_cost_path_ids)))
         for way_id in least_cost_path_ids:
@@ -108,6 +114,9 @@ class Repl:
     def eos(self, v):
         return self.__is_eos(v)
 
+    def bos(self, v):
+        return v.lower().find(StartOfSession) == 0
+
     def parse_least_cost_path(self, *fields):
         x_lat, x_lon, y_lat, y_lon = fields
         start_min_dist, start_min_point = self.closest_point(float(x_lat), float(x_lon))
@@ -120,16 +129,19 @@ class Repl:
         min_point, min_dist = (0, 0), float('inf')
         for v_id, v_map in self.__vertex_map.items():
             v_lat, v_lon = float(v_map['lat']), float(v_map['lon'])
-            dist = server.cost(lat, lon, v_lat, v_lon)
+            dist = cost(lat, lon, v_lat, v_lon)
             if dist < min_dist:
                 min_dist = dist
                 min_point = v_map
 
         return min_dist, min_point
 
+def fresh_repl(stdin=None, stdout=None):
+    srv, vmap = create_server()
+    return Repl(srv, vmap, stdin=stdin, stdout=stdout)
+
 def main():
-    srv, vmap = server.create_server()
-    repl = Repl(srv, vmap)
+    repl = fresh_repl()
     while 1:
         head, *rest = repl.read_evaluate()
         if repl.eos(head):

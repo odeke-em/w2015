@@ -7,8 +7,8 @@
 #include "serial_handling.h"
 
 // #define DEBUG_SCROLLING
-//#define DEBUG_PATH
-#define DEBUG_MEMORY
+// #define DEBUG_PATH
+// #define DEBUG_MEMORY
 
 // Pins and interrupt lines for the zoom in and out buttons.
 const uint8_t zoom_in_interrupt = 1;     // Digital pin 3.
@@ -30,11 +30,16 @@ const uint8_t joy_pin_y = 0;
 // Digital pin for the joystick button on the Arduino.
 const uint8_t joy_pin_button = 4;
 
+const uint8_t led_in_start = 11;
+const uint8_t led_in_end   = 12;
+
 // forward function declarations
 void initialize_sd_card();
 void initialize_screen();
 void initialize_joystick();
 uint8_t process_joystick(int16_t *dx, int16_t *dy);
+void initialize_debug_lights();
+void blink(const uint8_t pin);
 void status_msg(char *msg);
 void clear_status_msg();
 
@@ -65,6 +70,8 @@ void setup() {
     initialize_joystick();
 
     initialize_map();
+
+    initialize_debug_lights();
 
     // Want to start viewing window in the center of the map
     move_window(
@@ -114,7 +121,7 @@ RequestState request_state = RS_WAIT_FOR_START;
 LonLat32 start = LonLat32(0,0);
 LonLat32 end = LonLat32(0,0);
 
-// #define __SERVER
+#define __SERVER
 
 #ifndef __SERVER    
 void debug_msg(char* str) {
@@ -241,7 +248,6 @@ void loop() {
                 draw_cursor();
             }
         }
-
     }
 
     // at this point the screen is updated, with a new tile window and
@@ -274,14 +280,20 @@ void loop() {
             debug_msg("Stored start");
             start = p;
             request_state = RS_WAIT_FOR_STOP;
+            blink(led_in_start);
         } else { // request_state==RS_WAIT_FOR_STOP
             debug_msg("Stored end");
             end = p;
+            blink(led_in_end);
             request_state = RS_WAIT_FOR_START;
-            int path_len = srv_get_pathlen(start,end);
+
+            // Send in the start and end
+            int path_len = srv_get_pathlen(start, end);
+            send_ack();
+
             if (path_len>0) {
                 LonLat32 waypoints[path_len];
-                if (srv_get_waypoints(waypoints,path_len)>=0) {
+                if (srv_get_waypoints(waypoints, path_len)>=0) {
                     debug_msg("Data received fine");
                 }
             } else {
@@ -500,3 +512,19 @@ void handle_zoom_out() {
     }
 }
 
+void initialize_debug_lights() {
+    pinMode(led_in_start, OUTPUT);
+    digitalWrite(led_in_start, LOW);
+
+    pinMode(led_in_end, OUTPUT);
+    digitalWrite(led_in_end, LOW);
+}
+
+
+void blink(const uint8_t pin) {
+    digitalWrite(pin, LOW);
+    delay(500);    
+    digitalWrite(pin, HIGH);
+    delay(500);    
+    digitalWrite(pin, LOW);
+}

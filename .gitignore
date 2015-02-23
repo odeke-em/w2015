@@ -27,4 +27,12 @@
 *.i*86
 *.x86_64
 *.hex
+
+# Arduino files
 build-cli
+
+# Swap files
+*.sw[op]
+
+# pyc files
+*.py[co]
