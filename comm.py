@@ -3,7 +3,7 @@
 import sys
 
 # Local modules
-from graphing import repl
+from proj1 import repl
 from textserial import textserial
 
 def default_port():
