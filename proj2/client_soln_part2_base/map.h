@@ -70,6 +70,7 @@ uint8_t get_cursor_screen_x_y(uint16_t *cursor_screen_x,uint16_t *cursor_screen_
 
 void draw_cursor();
 void draw_cursor_coords(const uint16_t x, const uint16_t y);
+void draw_cursor_point(const uint16_t x, const uint16_t y);
 
 void erase_cursor();
 void erase_cursor_coords(const uint16_t x, const uint16_t y);

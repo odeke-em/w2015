@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import base64
 import doctest
 
 # Local module
@@ -15,6 +16,7 @@ EndOfSession    = 'E'
 Request         = 'R'
 WayPoint        = 'W'
 Unknown         = 'U'
+Comment         = '#'
 
 def is_callable_attr(obj, attr):
     """
@@ -58,7 +60,18 @@ class Repl:
         return self.__stdout.write(content+'\n')
 
     def readline(self):
-        return self.__stdin.readline()
+        try:
+            df = self.__stdin.readline()
+        except Exception as e:
+            print(e)
+            return ''
+        else:
+            if df and df[0] == Comment:
+                print(df)
+                return self.readline()
+
+            #print(df)
+            return df
 
     def evaluate(self, data):
         parsed = preprocess_line(data)
@@ -76,11 +89,17 @@ class Repl:
     def parse_request(self, data):
         head, *rest = data
         least_cost_path_ids = self.parse_least_cost_path(*rest)
-        print(least_cost_path_ids)
+        # print("\033[47midsLen\033[00m", len(least_cost_path_ids))
 
-        self.writeline('N %d'%(len(least_cost_path_ids)))
+        fmt = 'N %d'%(len(least_cost_path_ids))
+        self.writeline(fmt)
+
         for way_id in least_cost_path_ids:
-            self.send_way_point(way_id)
+            if not self.send_way_point(way_id):
+                print("Failed to get a response", way_id)
+                break
+
+            print(way_id)
 
         self.send_eos()
 
@@ -88,14 +107,16 @@ class Repl:
         self.writeline(EndOfSession)
 
     def send_way_point(self, way_id):
-        while True:
-            _, ok = self.parse_ack()
-            if ok:
-                retr = self.__vertex_map.get(way_id, None)
-                if retr is None:
-                    return False
-                self.writeline('%s %d %d'%(WayPoint, retr['lat'], retr['lon']))
-                return True
+        retr = self.__vertex_map.get(way_id, None)
+        if retr is None:
+            return False
+        lat, lon = retr['lat'], retr['lon']
+        outLine = '%s %d %d'%(WayPoint, lat, lon)
+        print(outLine, self.writeline(outLine))
+
+        _, ok = self.parse_ack()
+        print(_, ok)
+        return ok
 
     def parse_ack(self):
         symlist = preprocess_line(self.readline())
@@ -103,7 +124,9 @@ class Repl:
         if len(symlist) >= 1:
             symbol = symlist[0]
 
+        # print(symbol, "symlist", symlist)
         return symbol, symbol == Acknowledgement
+        # return symbol, True
 
     def read_evaluate(self):
         return self.evaluate(self.readline())
@@ -119,9 +142,12 @@ class Repl:
 
     def parse_least_cost_path(self, *fields):
         x_lat, x_lon, y_lat, y_lon = fields
-        start_min_dist, start_min_point = self.closest_point(float(x_lat), float(x_lon))
-        end_min_dist, end_min_point     = self.closest_point(float(y_lat), float(y_lon))
-        start_id, end_id = start_min_point.get('id', -1), end_min_point.get('id', -1)
+        start_min_dist, start_min_point =\
+                        self.closest_point(float(x_lat), float(x_lon))
+        end_min_dist, end_min_point  =\
+                        self.closest_point(float(y_lat), float(y_lon))
+        start_id, end_id =\
+                     start_min_point.get('id', -1), end_min_point.get('id', -1)
 
         return self.__server.least_cost_path_internal(start_id, end_id)
 

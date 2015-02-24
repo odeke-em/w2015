@@ -9,9 +9,10 @@
 struct LonLat32 { 
     int32_t lon;
     int32_t lat;
+    char map_num;
     // We provide a constructor so that one can use a = Point32(lat,lon);
-    LonLat32( int32_t p_lon=0, int32_t p_lat=0 ) 
-    : lon(p_lon),lat(p_lat) // initializing the member variables
+    LonLat32(int32_t p_lon=0, int32_t p_lat=0, char p_map_num=-1) 
+    : lon(p_lon),lat(p_lat), map_num(p_map_num) // initializing the member variables
     {}
 };
 

@@ -247,6 +247,10 @@ void draw_cursor_coords(const uint16_t x, const uint16_t y) {
     tft.fillCircle(x, y, dot_radius, RED);
 }
 
+void draw_cursor_point(const uint16_t x, const uint16_t y) {
+    tft.fillCircle(x, y, dot_radius, BLUE);
+}
+
 void draw_cursor() {
     // the current position of the cursor on the screen, if visible
     uint16_t cursor_screen_x;

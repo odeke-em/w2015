@@ -3,6 +3,17 @@
 
 #include <stdint.h>
 #include "core_types.h"
+
+#define comment_debug(...) {\
+    Serial.print("# ");\
+    Serial.print(__VA_ARGS__);\
+}
+
+#define comment_debug_ln(...) {\
+    comment_debug(__VA_ARGS__);\
+    Serial.println();\
+}
+
 // >>>>>>>>>>>>>>>>>>>> CUT >>>>>>>>>>>>>>>>>>>> 
 
 /** Gets the length of the path between start and end.
@@ -85,9 +96,15 @@ uint16_t string_read_field(const char *str, uint16_t str_start,
 int32_t string_get_int(const char *str);
  
 void send_ack();
+void parse_ack();
+void send_eos();
+void parse_eos();
 
 // Forward declarations
-int parse_first_digits(const char *str, int32_t *sav);
 void send_coords(const LonLat32 *start, const LonLat32 *end);
+int16_t parse_first_digits(const char *str, const uint16_t len, int32_t *sav);
+
+LonLat32 get_waypoint();
+void debug_waypoint(const LonLat32 pt);
 
 #endif

@@ -47,6 +47,9 @@ void clear_status_msg();
 void handle_zoom_in();
 void handle_zoom_out();
 
+void draw_waypoint(char fallback_map_num, const LonLat32 wp);
+void draw_cursor_converted(const char map_num, int32_t lon, int32_t lat);
+
 // global state variables
 
 // globally accessible screen
@@ -98,10 +101,10 @@ void setup() {
     attachInterrupt(zoom_in_interrupt, handle_zoom_in, FALLING);
     attachInterrupt(zoom_out_interrupt, handle_zoom_out, FALLING);
 
-#ifdef DEBUG_MEMORY
-    Serial.print("Available mem:");
-    Serial.println(AVAIL_MEM);
-#endif
+#if (1) || DEBUG_MEMORY
+    comment_debug_ln("Available mem: ");
+    comment_debug_ln(AVAIL_MEM);
+#endif // DEBUG_MEMORY
 }
 
 const uint16_t screen_scroll_delta = 32;
@@ -275,31 +278,47 @@ void loop() {
         debug_msg(cursor_lon);
         debug_msg("\n");
         // >>>>>>>>>>>>>>>>>>>> SERIAL >>>>>>>>>>>>>>>>>>>> 
-        LonLat32 p(cursor_lon,cursor_lat);
+        LonLat32 p(cursor_lon, cursor_lat, current_map_num);
         if (request_state==RS_WAIT_FOR_START) {
             debug_msg("Stored start");
             start = p;
             request_state = RS_WAIT_FOR_STOP;
             blink(led_in_start);
+            draw_cursor_converted(current_map_num, start.lon, start.lat);
         } else { // request_state==RS_WAIT_FOR_STOP
             debug_msg("Stored end");
             end = p;
             blink(led_in_end);
+            draw_cursor_converted(current_map_num, end.lon, end.lat);
             request_state = RS_WAIT_FOR_START;
 
             // Send in the start and end
             int path_len = srv_get_pathlen(start, end);
-            send_ack();
 
-            if (path_len>0) {
-                LonLat32 waypoints[path_len];
-                if (srv_get_waypoints(waypoints, path_len)>=0) {
-                    debug_msg("Data received fine");
-                }
-            } else {
+            comment_debug_ln(path_len);
+        #ifdef DEBUG
+            Serial.print("pl ");
+            Serial.println(path_len);
+        #endif // DEBUG
+
+            if (path_len <= 0) {
+                status_msg("path_len < 0");
                 debug_msg("path_len=0");
+            } else {
+                comment_debug("retrieving waypoints");
+                for (int i = 0; i < path_len; ++i) {
+                    LonLat32 pt = get_waypoint();
+                    send_ack();
+                      
+                    draw_waypoint(current_map_num, pt);
+                } 
+
+                parse_eos();
+                status_msg("didn't catch messages");
             }
-            // Serial.println("Done with communication");
+            send_eos();
+
+            comment_debug_ln("Done with communication");
         }
         // <<<<<<<<<<<<<<<<<<<< SERIAL <<<<<<<<<<<<<<<<<<<< 
     } // end of select_button_event processing
@@ -527,4 +546,20 @@ void blink(const uint8_t pin) {
     digitalWrite(pin, HIGH);
     delay(500);    
     digitalWrite(pin, LOW);
+}
+
+void draw_cursor_converted(const char map_num, int32_t lon, int32_t lat) {
+    int32_t x = longitude_to_x(map_num, lon);
+    int32_t y = longitude_to_x(map_num, lat);
+    draw_cursor_coords(x, y);
+}
+
+void draw_waypoint(char fallback_map_num, const LonLat32 wp) {
+    char mnum = wp.map_num;
+    if (mnum < 0)
+        mnum = fallback_map_num;
+
+    int32_t x = longitude_to_x(mnum, wp.lon);
+    int32_t y = longitude_to_x(mnum, wp.lat);
+    draw_cursor_coords(x, y);
 }

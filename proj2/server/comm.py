@@ -20,7 +20,9 @@ class SerialTalkie:
         self.__talkie = None
 
     def __start_talkie(self):
-        self.__talkie = textserial.TextSerial(self.__port, self.__baud)
+        self.__talkie = textserial.TextSerial(self.__port, self.__baud,
+                                                    encoding='ISO-8859-1')
+                            
 
     def __enter__(self):
         self.__start_talkie()
@@ -39,12 +41,17 @@ def main():
             if rpl.bos(head):
                 break
 
-        print('done starting')
-        while 1:
-            head, *rest = rpl.read_evaluate()
-            print(head, rest)
-            if rpl.eos(head):
-                break
+            print('Started!')
+            evaluating = True
+
+            while evaluating:
+                head, *rest = rpl.read_evaluate()
+                # print(head, rest)
+                if rpl.eos(head):
+                    evaluating = False
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
